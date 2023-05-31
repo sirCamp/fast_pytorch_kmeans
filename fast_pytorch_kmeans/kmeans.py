@@ -4,7 +4,7 @@ from .metrics import cos_sim, euc_sim, dot_sim
 from time import time
 import numpy as np
 from .init_methods import init_methods
-
+from tqdm import tqdm
 class KMeans:
   '''
   Kmeans clustering algorithm implemented with PyTorch
@@ -36,13 +36,16 @@ class KMeans:
     centroids: torch.Tensor, shape: [n_clusters, n_features]
       cluster centroids
   '''
-  def __init__(self, n_clusters, max_iter=100, tol=0.0001, verbose=0, mode="euclidean", init_method="random", minibatch=None):
+  def __init__(self, n_clusters, max_iter=100, tol=0.0001, verbose=0, mode="euclidean", 
+               init_method="random", minibatch=None, centroids=None, device='cpu'):
     self.n_clusters = n_clusters
     self.max_iter = max_iter
     self.tol = tol
     self.verbose = verbose
     self.init_method = init_method
     self.minibatch = minibatch
+    self.centroids = centroids
+    self.device=device
 
     if mode == 'cosine':
       self.sim_func = cos_sim
@@ -86,7 +89,7 @@ class KMeans:
 
       b: torch.Tensor, shape: [n, n_features]
     """
-    device = a.device
+    device = self.device #a.device
     batch_size = a.shape[0]
 
     if device.type == 'cpu':
@@ -133,11 +136,13 @@ class KMeans:
       labels: torch.Tensor, shape: [n_samples]
     """
     assert isinstance(X, torch.Tensor), "input must be torch.Tensor"
-    assert X.dtype in [torch.half, torch.float, torch.double], "input must be floating point"
+    assert X.dtype in [torch.half, torch.float, torch.double, torch.bfloat16], "input must be floating point"
     assert X.ndim == 2, "input must be a 2d tensor with shape: [n_samples, n_features] "
+    if 'cuda' in self.device and X.dtype == torch.bfloat16:
+      raise Exception('Cuda and BF16 not supported')
 
     batch_size, emb_dim = X.shape
-    device = X.device
+    device = self.device
     start_time = time()
     if centroids is None:
       self.centroids = init_methods[self.init_method](X, self.n_clusters, self.minibatch)
@@ -148,14 +153,14 @@ class KMeans:
 
     closest = None
     arranged_mask = torch.arange(self.n_clusters, device=device)[:, None]
-    for i in range(self.max_iter):
+    for i in tqdm(range(self.max_iter), total=self.max_iter):
       iter_time = time()
       if self.minibatch is not None:
-        x = X[np.random.choice(batch_size, size=[self.minibatch], replace=False)]
+        x = X[np.random.choice(batch_size, size=[self.minibatch], replace=False)].to(self.device)
         closest = self.max_sim(a=x, b=self.centroids)[1]
         matched_clusters, counts = closest.unique(return_counts=True)
       else:
-        x = X
+        x = X.to(self.device)
         closest = self.max_sim(a=x, b=self.centroids)[1]
 
       expanded_closest = closest[None].expand(self.n_clusters, -1)
