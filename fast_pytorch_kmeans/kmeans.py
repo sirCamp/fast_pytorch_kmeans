@@ -156,7 +156,6 @@ class KMeans:
       iter_time = time()
       if self.minibatch is not None:
         x = X[np.random.choice(batch_size, size=[self.minibatch], replace=False)].to(self.device)
-        print(x.device, self.centroids.device)
         closest = self.max_sim(a=x, b=self.centroids)[1]
         matched_clusters, counts = closest.unique(return_counts=True)
       else:
@@ -196,7 +195,7 @@ class KMeans:
       labels: torch.Tensor, shape: [n_samples]
     """
     assert isinstance(X, torch.Tensor), "input must be torch.Tensor"
-    assert X.dtype in [torch.half, torch.float, torch.double], "input must be floating point"
+    assert X.dtype in [torch.half, torch.float, torch.double, torch.bfloat16], "input must be floating point"
     assert X.ndim == 2, "input must be a 2d tensor with shape: [n_samples, n_features] "
 
     return self.max_sim(a=X, b=self.centroids)[1]
@@ -212,4 +211,4 @@ class KMeans:
     assert X.dtype in [torch.half, torch.float, torch.double, torch.bfloat16], "input must be floating point"
     assert X.ndim == 2, "input must be a 2d tensor with shape: [n_samples, n_features] "
 
-    self.fit_predict(X, centroids if centroids is None else self.centroids)
+    self.fit_predict(X, centroids if centroids is not None else self.centroids)

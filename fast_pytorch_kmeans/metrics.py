@@ -28,11 +28,11 @@ def euc_sim(a, b):
 def dot_sim(a, b):
     """
       Compute "dot product" similarity of 2 sets of vectors. 
-      With previously normalized vectors, it speedup the computation (normalized vectors dot product is consine similarity)
+      it can be used if the input vector has been previously normalized to speedup the computation
       
       Parameters:
       a: torch.Tensor, shape: [m, n_features]
 
       b: torch.Tensor, shape: [n, n_features]
     """
-    return a @ b.transpose(-2, -1)
+    return a @ normalize(b, dim=-1).transpose(-2, -1)
