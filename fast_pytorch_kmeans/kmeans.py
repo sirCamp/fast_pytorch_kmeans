@@ -144,10 +144,11 @@ class KMeans:
     batch_size, emb_dim = X.shape
     device = self.device
     start_time = time()
-    if centroids is None:
+    if centroids is None and self.centroids is None:
       self.centroids = init_methods[self.init_method](X, self.n_clusters, self.minibatch)
     else:
-      self.centroids = centroids
+      if centroids is not None:
+        self.centroids = centroids
     if self.minibatch is not None:
       num_points_in_clusters = torch.ones(self.n_clusters, device=device, dtype=X.dtype)
 
@@ -157,6 +158,7 @@ class KMeans:
       iter_time = time()
       if self.minibatch is not None:
         x = X[np.random.choice(batch_size, size=[self.minibatch], replace=False)].to(self.device)
+        print(x.device, self.centroids.device)
         closest = self.max_sim(a=x, b=self.centroids)[1]
         matched_clusters, counts = closest.unique(return_counts=True)
       else:
@@ -164,7 +166,7 @@ class KMeans:
         closest = self.max_sim(a=x, b=self.centroids)[1]
 
       expanded_closest = closest[None].expand(self.n_clusters, -1)
-      mask = (expanded_closest==arranged_mask).to(X.dtype)
+      mask = (expanded_closest==arranged_mask).to(self.device)
       c_grad = mask @ x / mask.sum(-1)[..., :, None]
       torch.nan_to_num_(c_grad)
 
@@ -209,7 +211,7 @@ class KMeans:
       X: torch.Tensor, shape: [n_samples, n_features]
     """
     assert isinstance(X, torch.Tensor), "input must be torch.Tensor"
-    assert X.dtype in [torch.half, torch.float, torch.double], "input must be floating point"
+    assert X.dtype in [torch.half, torch.float, torch.double, torch.bfloat16], "input must be floating point"
     assert X.ndim == 2, "input must be a 2d tensor with shape: [n_samples, n_features] "
 
-    self.fit_predict(X, centroids)
+    self.fit_predict(X, centroids if centroids is None else self.centroids)
