@@ -45,6 +45,7 @@ class KMeans:
     self.init_method = init_method
     self.minibatch = minibatch
     self.centroids = centroids.to(device)
+    print(self.centroids.device)
     self.device=device
 
     if mode == 'cosine':
