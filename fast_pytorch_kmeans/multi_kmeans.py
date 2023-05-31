@@ -1,6 +1,7 @@
 import math
 import torch
 from torch.nn.functional import normalize
+from .metrics import cos_sim, euc_sim, dot_sim
 from time import time
 import numpy as np
 from .init_methods import init_methods
@@ -39,9 +40,11 @@ class MultiKMeans:
     self.minibatch = minibatch
 
     if mode == 'cosine':
-      self.sim_func = self.cos_sim
+      self.sim_func = cos_sim
     elif mode == 'euclidean':
-      self.sim_func = self.euc_sim
+      self.sim_func = euc_sim
+    elif mode == 'dot':
+      self.sim_func = dot_sim  
     else:
       raise NotImplementedError()
 
@@ -52,26 +55,6 @@ class MultiKMeans:
       self._pynvml_exist = False
     
     self.centroids = None
-
-  @staticmethod
-  def cos_sim(a, b):
-    """
-      Compute cosine similarity of 2 sets of vectors
-      Parameters:
-      a: torch.Tensor, shape: [m, n_features]
-      b: torch.Tensor, shape: [n, n_features]
-    """
-    return normalize(a, dim=-1) @ normalize(b, dim=-1).transpose(-2, -1)
-
-  @staticmethod
-  def euc_sim(a, b):
-    """
-      Compute euclidean similarity of 2 sets of vectors
-      Parameters:
-      a: torch.Tensor, shape: [m, n_features]
-      b: torch.Tensor, shape: [n, n_features]
-    """
-    return 2 * a @ b.transpose(-2, -1) -(a**2).sum(dim=-1)[..., :, None] - (b**2).sum(dim=-1)[..., None, :]
 
   def remaining_memory(self, device):
     """
