@@ -92,7 +92,7 @@ class KMeans:
     device = self.device #a.device
     batch_size = a.shape[0]
 
-    if device.type == 'cpu':
+    if self.device == 'cpu':
       sim = self.sim_func(a, b)
       max_sim_v, max_sim_i = sim.max(dim=-1)
       return max_sim_v, max_sim_i
