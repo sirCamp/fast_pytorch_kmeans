@@ -44,8 +44,7 @@ class KMeans:
     self.verbose = verbose
     self.init_method = init_method
     self.minibatch = minibatch
-    self.centroids = centroids.to(device)
-    print(self.centroids.device)
+    self.centroids = centroids
     self.device=device
 
     if mode == 'cosine':
@@ -62,8 +61,6 @@ class KMeans:
       self._pynvml_exist = True
     except ModuleNotFoundError:
       self._pynvml_exist = False
-    
-    self.centroids = None
 
   def remaining_memory(self, device):
     """
