@@ -163,7 +163,9 @@ class KMeans:
         closest = self.max_sim(a=x, b=self.centroids)[1]
 
       expanded_closest = closest[None].expand(self.n_clusters, -1)
-      mask = (expanded_closest==arranged_mask).to(X.dtype)
+      mask = (expanded_closest==arranged_mask)
+      print(mask.size())
+      mask = mask.to(X.dtype)
       c_grad = mask @ x / mask.sum(-1)[..., :, None]
       torch.nan_to_num_(c_grad)
 
