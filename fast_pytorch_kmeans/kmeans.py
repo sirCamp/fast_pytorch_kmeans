@@ -177,7 +177,7 @@ class KMeans:
         lr = 1
 
       self.centroids = self.centroids * (1-lr) + c_grad * lr
-      if self.verbose >= 2:
+      if self.verbose >= 2 and i%1000==0:
         print('iter:', i, 'error:', error.item(), 'time spent:', round(time()-iter_time, 4))
       if error <= self.tol:
         break
